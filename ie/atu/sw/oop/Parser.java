@@ -19,6 +19,32 @@ public class Parser {
 	List<String> google_1000;
 	Map<String, DictionaryEntry> dictWords = new ConcurrentSkipListMap<>();
 
+	public void configureDictionary(String path) {
+		try (ExecutorService es = Executors.newVirtualThreadPerTaskExecutor()) {
+			try {
+				Files.lines(Paths.get(path)).forEach(line -> es.execute(() -> processDictionary(line)));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public void configureCommonWords() {
+
+	}
+
+	public void specifyTextFile(String path) {
+		try (ExecutorService es = Executors.newVirtualThreadPerTaskExecutor()) {
+			try {
+				Files.lines(Paths.get(path)).forEach(line -> es.execute(() -> process(line, lines.incrementAndGet())));
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+
 	public Parser(String path, String google_1000, String dictionary) {
 //		String dataPath = "./data_src/";
 //		Path[] filesPath = Stream.of(new File(dataPath).listFiles()).filter(Predicate.not(File::isDirectory)).map(File::toPath).toArray(Path[]::new);
