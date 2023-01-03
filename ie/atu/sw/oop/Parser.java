@@ -30,7 +30,7 @@ public class Parser {
 	public void configureDictionary() {
 		int indent = 1;
 		String path = query("Specify Dictionary File", indent);
-		if (path != null) {
+		if (path != null && !path.isBlank()) {
 			File file = new File(path);
 			if (file.exists() && file.isFile()) {
 				long size = file.length();
@@ -50,7 +50,7 @@ public class Parser {
 				Formatter.printError("File does not exist", indent);
 			}
 		} else {
-			Formatter.printError("Fatal Exception", indent);
+			Formatter.printError("Invalid File path specified", indent);
 		}
 
 	}
@@ -61,7 +61,7 @@ public class Parser {
 		if (path != null && !path.isBlank()) {
 			outputFile = path;
 		} else {
-			Formatter.printError("Invalid File specified", indent);
+			Formatter.printError("Invalid File path specified", indent);
 		}
 
 	}
@@ -69,7 +69,7 @@ public class Parser {
 	public void configureCommonWords() {
 		int indent = 1;
 		String path = query("Specify Common Words File", indent);
-		if (path != null) {
+		if (path != null && !path.isBlank()) {
 			File file = new File(path);
 			if (file.exists() && file.isFile()) {
 				long size = file.length();
@@ -102,7 +102,7 @@ public class Parser {
 				Formatter.printError("File does not exist", indent);
 			}
 		} else {
-			Formatter.printError("Fatal Exception", indent);
+			Formatter.printError("Invalid File path specified", indent);
 		}
 
 	}
@@ -120,6 +120,10 @@ public class Parser {
 			break;
 		case 4:
 			configureOutputFile();
+			break;
+		case 5:
+			buildIndex();
+			break;
 		default:
 			break;
 		}
@@ -142,7 +146,7 @@ public class Parser {
 	public void specifyTextFile() {
 		int indent = 1;
 		String path = query("Specify Text File", indent);
-		if (path != null) {
+		if (path != null && !path.isBlank()) {
 			File file = new File(path);
 
 			if (file.exists() && file.isFile()) {
@@ -153,9 +157,11 @@ public class Parser {
 				 * process(line, lines.incrementAndGet()))); } catch (IOException e) {
 				 * e.printStackTrace(); } }
 				 */
+			} else {
+				Formatter.printError("File does not exist", indent);
 			}
 		} else {
-			Formatter.printError("File does not exist", indent);
+			Formatter.printError("Invalid File path specified", indent);
 		}
 	}
 
@@ -163,48 +169,29 @@ public class Parser {
 
 	}
 
-	public Parser(String path, String google_1000, String dictionary) {
-//		String dataPath = "./data_src/";
-//		Path[] filesPath = Stream.of(new File(dataPath).listFiles()).filter(Predicate.not(File::isDirectory)).map(File::toPath).toArray(Path[]::new);
-//		Arrays.stream(filesPath).forEach(p -> {
+	public void buildIndex() {
+		if(textFile == null) {
+			Formatter.printError("Cannot build Index, Text File not specified", 1);
+			return;
+		}
+		if(dictFile == null) {
+			Formatter.printError("Cannot build Index, Dictionary not Configured", 1);
+			return;
+		}
+		if(google_1000File == null) {
+			Formatter.printError("Cannot build Index, Common Words not Configured", 1);
+			return;
+		}
 		try (ExecutorService es = Executors.newVirtualThreadPerTaskExecutor()) {
-
-			try {
-				Files.lines(Paths.get(dictionary)).forEach(this::processDictionary);
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			try {
-				this.google_1000 = Files.lines(Paths.get(google_1000)).map(String::toLowerCase)
-						.collect(Collectors.toList());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-
-			Files.lines(Paths.get(path)).forEach(line -> es.execute(() -> process(line, lines.incrementAndGet())));
-
+			Files.lines(Paths.get(textFile)).forEach(line -> es.execute(() -> process(line, lines.incrementAndGet())));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-//		});
-
-		// this.google_1000.forEach(System.out::println);
-
 		words.entrySet().stream().sorted((e1, e2) -> {
 			return -(e1.getKey().compareTo(e2.getKey()));
 		}).forEach((v) -> {
 			System.out.printf("Key: %s, value: %s\n", v.getKey(), v.getValue());
 		});
-
-		/*
-		 * words.forEach((i, v) -> { System.out.printf("key: %s, value: %s\n", i,
-		 * v.toString()); });
-		 */
-
-		String dictPath = "./dictionary.csv";
-
 	}
 
 	private void process(String line, long lineNumber) {
