@@ -19,7 +19,7 @@ public class Menu {
 	}
 	
 	public int showMenu() throws IOException {
-		int returnCode = 0;
+		Formatter.printBoxed("MAIN MENU", 0, '*', '*', '*', 1);
 		IntStream.range(0,  options.length).forEach((i) -> {
 			System.out.printf("(%d) %s\n", i + 1, options[i]);
 		});
@@ -38,8 +38,11 @@ public class Menu {
 		} while(input < 1 || input > options.length);
 		if(input == options.length) {
 			return Runner.EXIT_CODE;
+		} else if (input == 5) { 
+			
 		}
-		return returnCode;
+	//	br.close();
+		return input;
 	}
 	
 }
