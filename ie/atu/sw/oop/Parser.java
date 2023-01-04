@@ -16,6 +16,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -128,7 +130,9 @@ public class Parser {
 			buildIndex();
 			break;
 		case 6:
-			printIndex(0);
+		case 7:
+		case 8:
+			printIndex(code - 6);
 		default:
 			break;
 		}
@@ -139,23 +143,56 @@ public class Parser {
 	private int lineCount = 0;
 
 	private void printIndex(int code) {
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		pageCount = 0;
 		lineCount = 0;
 		contnue = true;
 		Comparator<Entry<String, IndexEntry>> comp = null;
+		Predicate<Entry<String, IndexEntry>> filter = null;
 		if (code == 0) { // Ascending Order
 			comp = (e1, e2) -> e1.getKey().compareTo(e2.getKey());
+			filter = (e) -> true;
 		} else if (code == 1) { // Descending Order
 			comp = (e1, e2) -> -e1.getKey().compareTo(e2.getKey());
+			filter = (e) -> true;
+		} else if(code == 2) {
+			String query = query("Enter range (E.g. 'a-b')>", 2);
+			comp = (e1, e2) -> e1.getKey().compareTo(e2.getKey());
+
+			Pattern pattern = Pattern.compile("[\\W]*?([\\w]+)?-(\\w+)?.*");
+			Matcher matcher = pattern.matcher(query);
+			if (matcher.find()) {
+	//		    System.out.println(matcher.group(1));
+			    String start = matcher.group(1);
+			    String stop = matcher.group(2);
+			    filter = e -> {
+			    	boolean first = false;
+			    	boolean second = false;
+			    	if(start == null) {
+			    		first = true;
+			    	} else {
+			    		first = e.getKey().compareTo(start) >= 0;
+			    	}
+			    	
+			    	if(stop == null) {
+			    		second = true;
+			    	}else {
+			    		second = e.getKey().compareTo(stop) <= 0;
+			    	}
+			    	return first && second;
+			    	};
+			} else {
+				Formatter.printError("Invalid Range Entered", 2);
+				return;
+			}
 		}
-		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 
 //		List<String> keys = words.keySet().stream().collect(Collectors.toList());
 //		Function<Integer, String[]> supplier = (i) -> words.get(keys.get(i)).getAllRows(50).toArray(String[]::new);
 		String[] title = { "Word", "Detail" };
 		int[] ratio = { 10, 35 };
 		Formatter.printTabular(title, 0, null, ratio, 2, '+', '|', '-');
-		words.entrySet().stream().sorted(comp).takeWhile((e) -> contnue).forEach((v) -> {
+		words.entrySet().stream().filter(filter).sorted(comp).takeWhile((e) -> contnue).forEach((v) -> {
 			// String subject = v.getKey();
 			IndexEntry e = v.getValue();
 
@@ -220,9 +257,6 @@ public class Parser {
 	}
 
 	public Parser() {
-		textFile = "C:\\Users\\intot\\1984Orwell.txt";
-		dictFile = "C:\\Users\\intot\\dictionary.csv";
-		google_1000File = "C:\\Users\\intot\\google-1000.txt";
 
 	}
 

@@ -225,7 +225,7 @@ public class Formatter {
 					System.out.printf("%s%" + (WIDTHS[j] - s.length() + 1) + "c", s, vEdge);
 				}
 			}
-
+		//	if(i != rows - 1)
 			System.out.print('\n');
 		}
 

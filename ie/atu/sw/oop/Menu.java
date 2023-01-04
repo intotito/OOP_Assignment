@@ -7,7 +7,7 @@ import java.util.stream.IntStream;
 
 public class Menu {
 	private String[] options = { "Specify Text File", "Configure Dictionary", "Configure Common Words",
-			"Specify Output File", "Execute", "Quit" };
+			"Specify Output File", "Indexer", "Quit" };
 
 	public Menu() {
 
@@ -43,7 +43,7 @@ public class Menu {
 					proceed = false;
 					indent++;
 					String[] menus = { "Build Index", "View Index", "Back" };
-					Formatter.printBoxed("EXECUTE", indent, '*', '*', '*', 1);
+					Formatter.printBoxed("INDEXER", indent, '*', '*', '*', 1);
 					do {
 						IntStream.range(0, menus.length).forEach((i) -> {
 							System.out.printf("\t(%d) %s\n", i + 1, menus[i]);
@@ -69,7 +69,7 @@ public class Menu {
 					}
 					if (input == 6) { // View Index
 						indent++;
-						String[] subMenus = { "All", "Range", "Top Occurrence", "Least Occurrence", "Back" };
+						String[] subMenus = { "Ascending", "Descending", "Range", "Top Occurrence", "Least Occurrence", "Back" };
 						Formatter.printBoxed("VIEW INDEX", indent, '*', '*', '*', 1);
 						do {
 							IntStream.range(0, subMenus.length).forEach((i) -> {
@@ -85,11 +85,11 @@ public class Menu {
 							}
 						} while (input < 1 || input > subMenus.length);
 						input += 5;
-						if (input == 10) { // Back
+						if (input == 11) { // Back
 							indent -= 2;
 							proceed = true;
 							continue out;
-						}
+						} 
 					}
 				} while (proceed);
 			}
