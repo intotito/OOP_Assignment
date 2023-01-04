@@ -205,7 +205,7 @@ public class Formatter {
 	 */
 	public static void printTabularFeed(String[][] entry, int[] ratios, int indent, char corners, char vEdge,
 			char hEdge) {
-		final int rows = entry.length;
+		final int rows = entry.length + 1;
 		final int cols = entry[0].length;
 		final int unitWidth = 2;
 		final int[] WIDTHS = IntStream.range(0, entry[0].length).map(index -> {
@@ -213,7 +213,7 @@ public class Formatter {
 		}).toArray();
 		for (int i = 0; i < rows; i++) {
 			IntStream.range(0, indent).forEach(index -> System.out.print('\t'));
-			System.out.printf("%c", i % 2 == 1 ? corners : vEdge);
+			System.out.printf("%c", (i == (rows - 1)) ? corners : vEdge);
 
 			for (int j = 0; j < cols; j++) {
 				if (i == (rows - 1)) {

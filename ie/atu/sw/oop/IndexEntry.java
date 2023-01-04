@@ -45,9 +45,16 @@ public class IndexEntry {
 		}
 		rows.add("Pages");
 		Stream.of(splitLine(WIDTH, pages.stream().map(String::valueOf).collect(Collectors.joining(", ")))).forEach(rows::add);
+		try {
+			Thread.sleep(0);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		String[][] rr = new String[rows.size()][2];
 		for(int i = 0; i < rr.length; i++) {
 			rr[i] = new String[] {i == 0 ? title: " ",  rows.get(i)};
+		//	System.out.println("truth::::: " + title + "   ::::: " + rows.get(i));
 		}
 		return rr;
 	}
@@ -57,12 +64,12 @@ public class IndexEntry {
 		StringBuilder sb = new StringBuilder();
 		int count = 0;
 		for(int i = 0; i < words.length; i++) {
-			if(count + words[i].length() > WIDTH) {
+			if(count + words[i].length() + 1> WIDTH) {
 				sb.append("\n");
 				count = 0;
 			}
-			sb.append(words[i]);
-			count += words[i].length();
+			sb.append(words[i] + " ");
+			count += words[i].length() + 1;
 		}
 		return sb.toString().split("\\n");
 	}

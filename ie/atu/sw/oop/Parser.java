@@ -7,13 +7,14 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -127,26 +128,58 @@ public class Parser {
 			buildIndex();
 			break;
 		case 6:
-			printIndex();
+			printIndex(0);
 		default:
 			break;
 		}
 	}
-	
-	private void printIndex() {
+
+	private volatile boolean contnue = true;
+	private int pageCount = 0;
+	private int lineCount = 0;
+
+	private void printIndex(int code) {
+		pageCount = 0;
+		lineCount = 0;
+		contnue = true;
+		Comparator<Entry<String, IndexEntry>> comp = null;
+		if (code == 0) { // Ascending Order
+			comp = (e1, e2) -> e1.getKey().compareTo(e2.getKey());
+		} else if (code == 1) { // Descending Order
+			comp = (e1, e2) -> -e1.getKey().compareTo(e2.getKey());
+		}
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+
 //		List<String> keys = words.keySet().stream().collect(Collectors.toList());
 //		Function<Integer, String[]> supplier = (i) -> words.get(keys.get(i)).getAllRows(50).toArray(String[]::new);
-		String[] title = {"Word", "Detail"};
-		int[] ratio = {10, 25};
-		Formatter.printTabular(title, 0, null, ratio, 1, '+', '|', '-');
-		words.entrySet().stream().sorted((e1, e2) -> {
-			return -(e1.getKey().compareTo(e2.getKey()));
-		}).forEach((v) -> {
-		//	String subject = v.getKey();
+		String[] title = { "Word", "Detail" };
+		int[] ratio = { 10, 35 };
+		Formatter.printTabular(title, 0, null, ratio, 2, '+', '|', '-');
+		words.entrySet().stream().sorted(comp).takeWhile((e) -> contnue).forEach((v) -> {
+			// String subject = v.getKey();
 			IndexEntry e = v.getValue();
-			String[][] rows = e.getAllRows(50);
-			Formatter.printTabularFeed(rows, ratio, 1, '+', '|', '-');
-	//		 System.out.printf("Key: %s, value: %s\n", v.getKey(), v.getValue());
+
+			String[][] rows = e.getAllRows(70);
+			Formatter.printTabularFeed(rows, ratio, 2, '+', '|', '-');
+			lineCount += rows.length;
+			if (lineCount / 40 > pageCount) {
+				pageCount = lineCount / 40;
+				System.out.print("\t\tPress 'Enter' to continue or Enter any key to exit> ");
+				try {
+					String s = br.readLine();
+					if (s.isBlank()) {
+						System.out.print("\r                                                       \r");
+					} else {
+						contnue = false;
+						return;
+					}
+				} catch (IOException e1) {
+					// TODO Auto-generated catch block
+					e1.printStackTrace();
+				}
+			}
+
+			// System.out.printf("Key: %s, value: %s\n", v.getKey(), v.getValue());
 		});
 	}
 
@@ -220,11 +253,8 @@ public class Parser {
 		time = System.currentTimeMillis() - time;
 		String[] title = { "Build Time", String.format("%dms", time) };
 		int[] ratios = { 10, 10 };
-		String[][] vs = {
-				{"File Name", file.getName()}, 
-				{"Unique words", "" + words.size()},
-				{"Number of Pages", (lines.get() / 40) + ""}
-		};
+		String[][] vs = { { "File Name", file.getName() }, { "Unique words", "" + words.size() },
+				{ "Number of Pages", (lines.get() / 40) + "" } };
 		Formatter.printBoxed("BUILD SUMMARY", 1, '+', '|', '-', 0);
 		Formatter.printTabular(title, 2, (i) -> vs[i], ratios, 1, '+', '|', '-');
 		words.entrySet().stream().sorted((e1, e2) -> {
@@ -234,11 +264,12 @@ public class Parser {
 		});
 	}
 
+// .replaceAll("[^a-zA-Z0-9\\s+]", "")
 	private void process(String line, long lineNumber) {
 		progress.set(progress.get() + line.length() + 4);
 //		System.out.println(line);
-		String[] words = Arrays.stream(line.trim().replaceAll("[^a-zA-Z0-9\\s+]", "").split("\\s+"))
-				.filter(Predicate.not(String::isBlank)).toArray(String[]::new);
+		String[] words = Arrays.stream(line.trim().split("\\s+")).filter(Predicate.not(String::isBlank))
+				.map((w) -> w.replaceAll("^[^a-zA-Z0-9]+", "").replaceAll("[^a-zA-Z0-9]+$", "")).toArray(String[]::new);
 		Arrays.stream(words).map(String::toLowerCase).forEach(word -> {
 			// System.out.println("\t"+word);
 			if (!google_1000.contains(word)) {
