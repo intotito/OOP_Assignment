@@ -13,6 +13,8 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -124,9 +126,28 @@ public class Parser {
 		case 5:
 			buildIndex();
 			break;
+		case 6:
+			printIndex();
 		default:
 			break;
 		}
+	}
+	
+	private void printIndex() {
+//		List<String> keys = words.keySet().stream().collect(Collectors.toList());
+//		Function<Integer, String[]> supplier = (i) -> words.get(keys.get(i)).getAllRows(50).toArray(String[]::new);
+		String[] title = {"Word", "Detail"};
+		int[] ratio = {10, 25};
+		Formatter.printTabular(title, 0, null, ratio, 1, '+', '|', '-');
+		words.entrySet().stream().sorted((e1, e2) -> {
+			return -(e1.getKey().compareTo(e2.getKey()));
+		}).forEach((v) -> {
+		//	String subject = v.getKey();
+			IndexEntry e = v.getValue();
+			String[][] rows = e.getAllRows(50);
+			Formatter.printTabularFeed(rows, ratio, 1, '+', '|', '-');
+	//		 System.out.printf("Key: %s, value: %s\n", v.getKey(), v.getValue());
+		});
 	}
 
 	private String query(String message, int indent) {
@@ -166,37 +187,58 @@ public class Parser {
 	}
 
 	public Parser() {
+		textFile = "C:\\Users\\intot\\1984Orwell.txt";
+		dictFile = "C:\\Users\\intot\\dictionary.csv";
+		google_1000File = "C:\\Users\\intot\\google-1000.txt";
 
 	}
 
 	public void buildIndex() {
-		if(textFile == null) {
+		if (textFile == null) {
 			Formatter.printError("Cannot build Index, Text File not specified", 1);
 			return;
 		}
-		if(dictFile == null) {
+		if (dictFile == null) {
 			Formatter.printError("Cannot build Index, Dictionary not Configured", 1);
 			return;
 		}
-		if(google_1000File == null) {
+		if (google_1000File == null) {
 			Formatter.printError("Cannot build Index, Common Words not Configured", 1);
 			return;
 		}
+		words.clear();
+		File file = new File(textFile);
+		long time = System.currentTimeMillis();
 		try (ExecutorService es = Executors.newVirtualThreadPerTaskExecutor()) {
+			progress.set(0);
+			es.execute(() -> Formatter.printProgress(file.length(), () -> progress.get()));
 			Files.lines(Paths.get(textFile)).forEach(line -> es.execute(() -> process(line, lines.incrementAndGet())));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+//		System.out.println("Time: " + (System.currentTimeMillis() - time));
+		time = System.currentTimeMillis() - time;
+		String[] title = { "Build Time", String.format("%dms", time) };
+		int[] ratios = { 10, 10 };
+		String[][] vs = {
+				{"File Name", file.getName()}, 
+				{"Unique words", "" + words.size()},
+				{"Number of Pages", (lines.get() / 40) + ""}
+		};
+		Formatter.printBoxed("BUILD SUMMARY", 1, '+', '|', '-', 0);
+		Formatter.printTabular(title, 2, (i) -> vs[i], ratios, 1, '+', '|', '-');
 		words.entrySet().stream().sorted((e1, e2) -> {
 			return -(e1.getKey().compareTo(e2.getKey()));
 		}).forEach((v) -> {
-			System.out.printf("Key: %s, value: %s\n", v.getKey(), v.getValue());
+			// System.out.printf("Key: %s, value: %s\n", v.getKey(), v.getValue());
 		});
 	}
 
 	private void process(String line, long lineNumber) {
+		progress.set(progress.get() + line.length() + 4);
 //		System.out.println(line);
-		String[] words = line.trim().replaceAll("[^a-zA-Z0-9\\s+]", "").split("\\s+");
+		String[] words = Arrays.stream(line.trim().replaceAll("[^a-zA-Z0-9\\s+]", "").split("\\s+"))
+				.filter(Predicate.not(String::isBlank)).toArray(String[]::new);
 		Arrays.stream(words).map(String::toLowerCase).forEach(word -> {
 			// System.out.println("\t"+word);
 			if (!google_1000.contains(word)) {
@@ -205,7 +247,7 @@ public class Parser {
 				if (index != null) {
 
 				} else {
-					index = new IndexEntry();
+					index = new IndexEntry(word);
 					this.words.put(word, index);
 					// search dictionary and add definition
 				}
@@ -228,7 +270,7 @@ public class Parser {
 	}
 
 	private void processDictionary(final String line) {
-		progress.set(progress.get() + line.length() + 3);
+		progress.set(progress.get() + line.length() + 4);
 		String[] parts = line.split(",");
 		String subject = parts[0].toLowerCase();
 		String others = parts[1];

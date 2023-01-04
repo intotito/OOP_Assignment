@@ -1,5 +1,6 @@
 package ie.atu.sw.oop;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
@@ -150,4 +151,83 @@ public class Formatter {
 	public static void printError(String msg, int indent) {
 		printBoxedTitled("Error", msg, indent, '*', '*', '*', 1);
 	}
+	
+	/**
+	 * This method prints supplied values in tabular form
+	 * 
+	 * @param title          - An array containing titles for the columns
+	 * @param numberOfValues - Number of rows in the table
+	 * @param supplier       - A Function functional interface that gets Each row of
+	 *                       the table given an index
+	 * @param ratios         - The width of various columns of the table
+	 * @param indent         - Indent to start displaying the feed
+	 * @param corners        - Corners characters for the table
+	 * @param vEdge          - Vertical edge characters for the table
+	 * @param hEdge          - Horizontal edge characters for the table
+	 */
+	public static void printTabular(String[] title, int numberOfValues, Function<Integer, String[]> supplier,
+			int[] ratios, int indent, char corners, char vEdge, char hEdge) {
+		final int rows = numberOfValues * 2 + 3;
+		final int cols = title.length;
+		final int unitWidth = 2;
+		final int[] WIDTHS = IntStream.range(0, title.length).map(index -> {
+			return ratios[index] * unitWidth;
+		}).toArray();
+//		final int WIDTH = IntStream.of(WIDTHS).sum() + title.length + 1;
+		for (int i = 0; i < rows; i++) {
+			IntStream.range(0, indent).forEach(index -> System.out.print('\t'));
+			System.out.printf("%c", i % 2 == 0 ? corners : vEdge);
+			String[] values = (i % 2 == 0 || i == 1) ? null : supplier.apply((i - 2) / 2);
+			for (int j = 0; j < cols; j++) {
+				if (i % 2 == 0) {
+					IntStream.range(0, WIDTHS[j]).forEach(index -> System.out.printf("%c", hEdge));
+					System.out.printf("%c", corners);
+				} else {
+					String s = (i == 1) ? title[j] : values[j].trim();
+					s = s.length() > WIDTHS[j] ? s.substring(0, WIDTHS[j] - 5) + "..." : s;
+					System.out.printf("%s%" + (WIDTHS[j] - s.length() + 1) + "c", s, vEdge);
+				}
+			}
+
+			System.out.print('\n');
+		}
+
+	}
+	/**
+	 * Prints values at the bottom of a table by replacing the current line.
+	 * 
+	 * @param entry   - Array of values to be output on the console
+	 * @param ratios  - The width of various columns of the table
+	 * @param indent  - Indent to start displaying the feed
+	 * @param corners - Corners characters for the table
+	 * @param vEdge   - Vertical edge characters for the table
+	 * @param hEdge   - Horizontal edge characters for the table
+	 */
+	public static void printTabularFeed(String[][] entry, int[] ratios, int indent, char corners, char vEdge,
+			char hEdge) {
+		final int rows = entry.length;
+		final int cols = entry[0].length;
+		final int unitWidth = 2;
+		final int[] WIDTHS = IntStream.range(0, entry[0].length).map(index -> {
+			return ratios[index] * unitWidth;
+		}).toArray();
+		for (int i = 0; i < rows; i++) {
+			IntStream.range(0, indent).forEach(index -> System.out.print('\t'));
+			System.out.printf("%c", i % 2 == 1 ? corners : vEdge);
+
+			for (int j = 0; j < cols; j++) {
+				if (i == (rows - 1)) {
+					IntStream.range(0, WIDTHS[j]).forEach(index -> System.out.printf("%c", hEdge));
+					System.out.printf("%c", corners);
+				} else {
+					String s = entry[i][j];
+					s = s.length() > WIDTHS[j] ? s.substring(0, WIDTHS[j] - 5) + "..." : s;
+					System.out.printf("%s%" + (WIDTHS[j] - s.length() + 1) + "c", s, vEdge);
+				}
+			}
+
+			System.out.print('\n');
+		}
+
+	}	
 }

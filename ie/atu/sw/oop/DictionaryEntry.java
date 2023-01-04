@@ -23,4 +23,8 @@ public class DictionaryEntry {
 	public String[] getDefinitions() {
 		return definitions;
 	}
+	
+	public String getWord() {
+		return word;
+	}
 }
