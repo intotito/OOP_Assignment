@@ -1,4 +1,6 @@
-package ie.atu.sw.oop;
+package ie.atu.sw;
+
+import ie.atu.sw.indexer.IndexerImp;
 
 public class Runner {
 	public volatile static long progress = 0;
@@ -6,11 +8,11 @@ public class Runner {
 
 	public static void main(String[] args) throws Exception {
 		// You should put the following code into a menu or Menu class
-		System.out.println(ConsoleColour.WHITE);
+		System.out.println(ConsoleColour.CYAN);
 		System.out.println("************************************************************");
 		System.out.println("*       ATU - Dept. Computer Science & Applied Physics     *");
 		System.out.println("*                                                          *");
-		System.out.println("*              Virtual Threaded Text Indexer               *");
+		System.out.println("*              Virtual Threaded Text IndexerImp               *");
 		System.out.println("*                                                          *");
 		System.out.println("************************************************************");
 		/*
@@ -26,7 +28,7 @@ public class Runner {
 		 */ System.out.println();
 
 //		Formatter.printProgress(100, () -> progress);
-		Parser parser = new Parser();
+		IndexerImp parser = new IndexerImp();
 		Menu menu = new Menu();
 		int code = 0;
 		do {

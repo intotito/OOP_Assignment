@@ -1,4 +1,4 @@
-package ie.atu.sw.oop;
+package ie.atu.sw.indexer;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -21,17 +21,52 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class Parser {
+import ie.atu.sw.Formatter;
+import ie.atu.sw.indexer.data.DictionaryEntry;
+import ie.atu.sw.indexer.data.IndexEntry;
+
+/**
+ * This class forms the basis of an API to index a document. This class provides
+ * a suite of public methods necessary to configure, build, process and query an
+ * index for a given document.
+ * 
+ * @author intot
+ *
+ */
+public class IndexerImp implements Indexer {
 	private String textFile = null;
 	private String dictFile = null;
 	private String google_1000File = null;
 	private String outputFile = null;
+	private int linesPerPage = 40;
+	private int pageBreak = 1;
 	private volatile static AtomicLong progress = new AtomicLong(0);
 	private static AtomicLong lines = new AtomicLong(0);
 	Map<String, IndexEntry> words = new ConcurrentSkipListMap<>();
 	List<String> google_1000;
 	Map<String, DictionaryEntry> dictWords = new ConcurrentSkipListMap<>();
 
+	/**
+	 * *
+	 * 
+	 * This method Configures the parser with a dictionary provided as a URI to a
+	 * CSV file This method is responsible for retrieving and verifying the URI of
+	 * the dictionary from the user and parsing the file. It will display an error
+	 * message to the user when an exception occurs. The CSV file is parsed using a
+	 * single Virtual Thread per line
+	 * 
+	 * <pre>
+	 * *******************
+	 * Big-O Running Time*
+	 * *******************
+	 * </pre>
+	 * 
+	 * The running time for this method is <code>O(nLog(n))</code> where
+	 * <code>n</code> is the number of entries in the dictionary. The underlying
+	 * data structure for mapping each word in the dictionary guarantees a running
+	 * time of <code>Log(n)</code> for search and insertion.
+	 */
+	@Override
 	public void configureDictionary() {
 		int indent = 1;
 		String path = query("Specify Dictionary File", indent);
@@ -60,6 +95,10 @@ public class Parser {
 
 	}
 
+	/**
+	 * This method retrieves a URI of a file to output the index from a user.
+	 */
+	@Override
 	public void configureOutputFile() {
 		int indent = 1;
 		String path = query("Specify Output File", indent);
@@ -71,6 +110,22 @@ public class Parser {
 
 	}
 
+	/**
+	 * 
+	 * This method configures the Parsing Engine with common words which are not
+	 * deemed worthy of listing in an index. These common words are expected from a
+	 * text file with each word separated by white space.
+	 * 
+	 * <pre>
+	 * *******************
+	 * Big-O Running Time*
+	 * *******************
+	 * </pre>
+	 * 
+	 * The running time for this method is <code>O(n)</code> where <code>n</code> is
+	 * the number of words in the document.
+	 */
+	@Override
 	public void configureCommonWords() {
 		int indent = 1;
 		String path = query("Specify Common Words File", indent);
@@ -112,6 +167,12 @@ public class Parser {
 
 	}
 
+	/**
+	 * Executes command given a code.
+	 * 
+	 * @param code - Code retrieved from menu operation. The value of the code is
+	 *             used internally to determine which command to invoke.
+	 */
 	public void execute(int code) {
 		switch (code) {
 		case 1:
@@ -132,17 +193,89 @@ public class Parser {
 		case 6:
 		case 7:
 		case 8:
+		case 9:
+		case 10:
 			printIndex(code - 6);
+			break;
+		case 12:
+			setOptions();
 		default:
 			break;
 		}
 	}
+/*
+ * Provides a submenu for setting options that controls how output
+ * is displayed to the user. 
+ * This includes: setting number of lines per page and number of page to 
+ * order page break.
+ */
+	private void setOptions() {
+		int indent = 2;
+		String inputStr = null;
+		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		int input = -1;
+		String[] subMenus = { "Lines per Page", "Page break", "Back" };
+		Formatter.printBoxed("OPTIONS", indent, '*', '*', '*', 1);
+		IntStream.range(0, subMenus.length).forEach((i) -> {
+			System.out.printf("\t\t(%d) %s\n", i + 1, subMenus[i]);
+		});
+		do {
 
+			System.out.printf("\t\tSelect Option [%d-%d]>", 1, subMenus.length);
+			try {
+				inputStr = br.readLine().trim();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			try {
+				input = Integer.parseInt(inputStr);
+			} catch (NumberFormatException nfe) {
+				input = -1;
+				continue;
+			}
+		} while (input < 1 || input > subMenus.length);
+		if (input == 1) {
+			try {
+				linesPerPage = Integer.parseInt(query(String.format("Lines per Page[%d]>", linesPerPage), indent));
+			} catch (NumberFormatException nfe) {
+				Formatter.printError("Invalid Entry", 2);
+			}
+		} else if (input == 2) {
+			try {
+				pageBreak = Integer.parseInt(query(String.format("Page break[%d]>", pageBreak), indent));
+			} catch (NumberFormatException nfe) {
+				Formatter.printError("Invalid Entry", 2);
+			}
+		}
+	}
+	/*
+	 * This instance is used break of the output display loop
+	 * when a user enters a key to quit from displaying output.
+	 */
 	private volatile boolean contnue = true;
+	/*
+	 * This instance variable is used to keep track of the number of pages
+	 * traversed so far by the display engine. 
+	 */
 	private int pageCount = 0;
+	/*
+	 * This instance variable is used to keep track of the number of lines
+	 * traversed so far by the display engine.
+	 */
 	private int lineCount = 0;
 
-	private void printIndex(int code) {
+	
+	/**
+	 * This method provides the mechanism for 'walking' the index. The index
+	 * @param code
+	 */
+	
+	public void printIndex(int code) {
+		if (words.isEmpty()) {
+			Formatter.printError("Index yet to be built", 2);
+			return;
+		}
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		pageCount = 0;
 		lineCount = 0;
@@ -155,36 +288,42 @@ public class Parser {
 		} else if (code == 1) { // Descending Order
 			comp = (e1, e2) -> -e1.getKey().compareTo(e2.getKey());
 			filter = (e) -> true;
-		} else if(code == 2) {
+		} else if (code == 2) { // Range
 			String query = query("Enter range (E.g. 'a-b')>", 2);
 			comp = (e1, e2) -> e1.getKey().compareTo(e2.getKey());
 
 			Pattern pattern = Pattern.compile("[\\W]*?([\\w]+)?-(\\w+)?.*");
 			Matcher matcher = pattern.matcher(query);
 			if (matcher.find()) {
-	//		    System.out.println(matcher.group(1));
-			    String start = matcher.group(1);
-			    String stop = matcher.group(2);
-			    filter = e -> {
-			    	boolean first = false;
-			    	boolean second = false;
-			    	if(start == null) {
-			    		first = true;
-			    	} else {
-			    		first = e.getKey().compareTo(start) >= 0;
-			    	}
-			    	
-			    	if(stop == null) {
-			    		second = true;
-			    	}else {
-			    		second = e.getKey().compareTo(stop) <= 0;
-			    	}
-			    	return first && second;
-			    	};
+				// System.out.println(matcher.group(1));
+				String start = matcher.group(1);
+				String stop = matcher.group(2);
+				filter = e -> {
+					boolean first = false;
+					boolean second = false;
+					if (start == null) {
+						first = true;
+					} else {
+						first = e.getKey().compareTo(start) >= 0;
+					}
+
+					if (stop == null) {
+						second = true;
+					} else {
+						second = e.getKey().compareTo(stop) <= 0;
+					}
+					return first && second;
+				};
 			} else {
 				Formatter.printError("Invalid Range Entered", 2);
 				return;
 			}
+		} else if (code == 3) { // Top occurrence
+			comp = (e1, e2) -> (int) (e2.getValue().getOccurrence() - e1.getValue().getOccurrence());
+			filter = (e) -> true;
+		} else if (code == 4) { // Least occurrence
+			comp = (e1, e2) -> ((int) e1.getValue().getOccurrence() - (int) e2.getValue().getOccurrence());
+			filter = (e) -> true;
 		}
 
 //		List<String> keys = words.keySet().stream().collect(Collectors.toList());
@@ -199,8 +338,8 @@ public class Parser {
 			String[][] rows = e.getAllRows(70);
 			Formatter.printTabularFeed(rows, ratio, 2, '+', '|', '-');
 			lineCount += rows.length;
-			if (lineCount / 40 > pageCount) {
-				pageCount = lineCount / 40;
+			if (lineCount / linesPerPage > pageCount + pageBreak - 1) {
+				pageCount = lineCount / linesPerPage;
 				System.out.print("\t\tPress 'Enter' to continue or Enter any key to exit> ");
 				try {
 					String s = br.readLine();
@@ -220,6 +359,9 @@ public class Parser {
 		});
 	}
 
+	/*
+	 * A utility method for getting String input from the user.
+	 */
 	private String query(String message, int indent) {
 		Formatter.printBoxed(message, indent, '+', '|', '-', 1);
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -234,6 +376,7 @@ public class Parser {
 		return path;
 	}
 
+	@Override
 	public void specifyTextFile() {
 		int indent = 1;
 		String path = query("Specify Text File", indent);
@@ -256,10 +399,11 @@ public class Parser {
 		}
 	}
 
-	public Parser() {
+	public IndexerImp() {
 
 	}
 
+	@Override
 	public void buildIndex() {
 		if (textFile == null) {
 			Formatter.printError("Cannot build Index, Text File not specified", 1);
@@ -346,8 +490,11 @@ public class Parser {
 		dictWords.put(subject, dEntry);
 	}
 
+	/*
+	 * A utility method for retrieving the page number given a line number
+	 */
 	private long getPageNumber(long lineNumber) {
-		return lineNumber / 40;
+		return lineNumber / linesPerPage;
 	}
 
 	private void parse(String str) {

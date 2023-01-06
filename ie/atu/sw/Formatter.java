@@ -1,14 +1,21 @@
-package ie.atu.sw.oop;
+package ie.atu.sw;
 
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
+/**
+ * This class provides a suite of static methods for formatting output to the
+ * console.
+ * 
+ * @author intot
+ *
+ */
 public class Formatter {
 	/**
 	 * This utility method emulates a Progress Meter that keeps track of a
-	 * background process progress. The method executes on a Virtual Thread
+	 * background process progress.
 	 * 
 	 * <pre>
 	 * *******************
@@ -33,7 +40,8 @@ public class Formatter {
 		char todo = '░'; // Change to whatever you like.
 		long index = 0;
 		long progress = 0;
-		while (index < total) {
+		long count = 0;
+		while (index < total && count < total) {
 			index = supplier.get();
 			System.out.print("\r[");
 			progress = (index * 100) / total;
@@ -46,7 +54,7 @@ public class Formatter {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-
+			count++;
 			System.out.printf("] %d%%  ", progress);
 		}
 		try {
@@ -56,12 +64,12 @@ public class Formatter {
 			e.printStackTrace();
 		}
 		System.out.println("\r                                                                       \r");
-	//	System.out.println("I am finished");
+		// System.out.println("I am finished");
 //		});
 	}
 
 	/**
-	 * This method displays the supplied String in a boxed format
+	 * This method prints a text within an enclosing box
 	 * 
 	 * <pre>
 	 * *******************
@@ -151,9 +159,18 @@ public class Formatter {
 	public static void printError(String msg, int indent) {
 		printBoxedTitled("Error", msg, indent, '*', '*', '*', 1);
 	}
-	
+
 	/**
 	 * This method prints supplied values in tabular form
+	 * 
+	 * <pre>
+	 * *******************
+	 * Big-O Running Time*
+	 * *******************
+	 * </pre>
+	 * 
+	 * The running time of this method is <code>O(n × m)</code> where
+	 * <code>n and m</code> are number of rows and width of the table respectively.
 	 * 
 	 * @param title          - An array containing titles for the columns
 	 * @param numberOfValues - Number of rows in the table
@@ -193,8 +210,18 @@ public class Formatter {
 		}
 
 	}
+
 	/**
-	 * Prints values at the bottom of a table by replacing the current line.
+	 * This method prints an entry (maybe one or more rows) in a table.
+	 * 
+	 * <pre>
+	 * *******************
+	 * Big-O Running Time*
+	 * *******************
+	 * </pre>
+	 * 
+	 * The running time of this method is <code>O(n × m)</code> where
+	 * <code>n and m</code> are number of entries and width of the table respectively.
 	 * 
 	 * @param entry   - Array of values to be output on the console
 	 * @param ratios  - The width of various columns of the table
@@ -225,9 +252,9 @@ public class Formatter {
 					System.out.printf("%s%" + (WIDTHS[j] - s.length() + 1) + "c", s, vEdge);
 				}
 			}
-		//	if(i != rows - 1)
+			// if(i != rows - 1)
 			System.out.print('\n');
 		}
 
-	}	
+	}
 }

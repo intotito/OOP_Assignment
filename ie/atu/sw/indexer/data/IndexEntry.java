@@ -1,4 +1,4 @@
-package ie.atu.sw.oop;
+package ie.atu.sw.indexer.data;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,11 +74,10 @@ public class IndexEntry {
 		return sb.toString().split("\\n");
 	}
 	
-	public String[] getRowsPerPageWidth(int WIDTH) {
-		List<String> rows = new ArrayList<>();
-		
-		return null;
+	public long getPageOccurrence(){
+		return pages.size();
 	}
-	
-	
+	public long getOccurrence() {
+		return count;
+	}
 }

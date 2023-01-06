@@ -1,4 +1,4 @@
-package ie.atu.sw.oop;
+package ie.atu.sw.indexer.data;
 
 import java.util.Arrays;
 import java.util.List;

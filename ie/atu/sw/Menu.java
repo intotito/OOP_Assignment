@@ -1,4 +1,4 @@
-package ie.atu.sw.oop;
+package ie.atu.sw;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -7,7 +7,7 @@ import java.util.stream.IntStream;
 
 public class Menu {
 	private String[] options = { "Specify Text File", "Configure Dictionary", "Configure Common Words",
-			"Specify Output File", "Indexer", "Quit" };
+			"Specify Output File", "IndexerImp", "Quit" };
 
 	public Menu() {
 
@@ -42,12 +42,13 @@ public class Menu {
 				out: do {
 					proceed = false;
 					indent++;
-					String[] menus = { "Build Index", "View Index", "Back" };
+					String[] menus = { "Build Index", "View Index", "Options", "Back" };
 					Formatter.printBoxed("INDEXER", indent, '*', '*', '*', 1);
+					IntStream.range(0, menus.length).forEach((i) -> {
+						System.out.printf("\t(%d) %s\n", i + 1, menus[i]);
+					});
 					do {
-						IntStream.range(0, menus.length).forEach((i) -> {
-							System.out.printf("\t(%d) %s\n", i + 1, menus[i]);
-						});
+
 						System.out.printf("\tSelect Option [%d-%d]>", 1, menus.length);
 						inputStr = br.readLine().trim();
 						try {
@@ -59,22 +60,26 @@ public class Menu {
 					} while (input < 1 || input > menus.length);
 					input += 4;
 					if (input == 5) { // Build Index
-						
+
 					} else if (input == 6) { // View Index
-						
-					} else if (input == 7) { // Back
+
+					} else if (input == 7) { // Options
+						input = 12;
+					} else if (input == 8) { // Back
 						indent--;
 						contnue = true;
 						continue outer;
 					}
 					if (input == 6) { // View Index
 						indent++;
-						String[] subMenus = { "Ascending", "Descending", "Range", "Top Occurrence", "Least Occurrence", "Back" };
+						String[] subMenus = { "Ascending", "Descending", "Range", "Top Occurrence", "Least Occurrence",
+								"Back" };
 						Formatter.printBoxed("VIEW INDEX", indent, '*', '*', '*', 1);
+						IntStream.range(0, subMenus.length).forEach((i) -> {
+							System.out.printf("\t\t(%d) %s\n", i + 1, subMenus[i]);
+						});
 						do {
-							IntStream.range(0, subMenus.length).forEach((i) -> {
-								System.out.printf("\t\t(%d) %s\n", i + 1, subMenus[i]);
-							});
+
 							System.out.printf("\t\tSelect Option [%d-%d]>", 1, subMenus.length);
 							inputStr = br.readLine().trim();
 							try {
@@ -89,7 +94,7 @@ public class Menu {
 							indent -= 2;
 							proceed = true;
 							continue out;
-						} 
+						}
 					}
 				} while (proceed);
 			}
