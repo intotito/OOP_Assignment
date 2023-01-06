@@ -4,21 +4,35 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+/**
+ * This class Encapsulate a single entry in the Index. 
+ * @author Otito Mbelu
+ *
+ */
 public class IndexEntry {
 	private String title;
 	private DictionaryEntry definition;
 	private List<Long> pages;
 	private long count = 0;
-	
+	/**
+	 * Create a new instance of IndexEntry
+	 * @param title - The word defined by this IndexEntry
+	 */
 	public IndexEntry(String title) {
 		this.title = title;
 		pages = new ArrayList<Long>();
 	}
-	
+	/**
+	 * Increment the number of occurrence of this entry.
+	 */
 	public void increment() {
 		count++;
 	}
-	
+	/**
+	 * Add a page to the list of pages where this entry occurs. 
+	 * If the page already exists it will not be added
+	 * @param pagenumber - The page number to add to the list of pages
+	 */
 	public void addPage(long pagenumber) {
 		if(!pages.contains(pagenumber)) {
 			pages.add(pagenumber);
@@ -34,7 +48,14 @@ public class IndexEntry {
 	public void setDefinitions(DictionaryEntry definition) {
 		this.definition = definition;
 	}
-	
+	/**
+	 * This method is used for formatting each entry to the console.
+	 * This method gets all definitions (if present) and pages where the entry occurs
+	 * as a separate line. Each line is formatted with the maximum width of the page, supplied as 
+	 * a parameter to the method.
+	 * @param WIDTH
+	 * @return
+	 */
 	public String[][] getAllRows(int WIDTH){
 		List<String> rows = new ArrayList<String>();
 		if(this.definition != null) {
@@ -58,8 +79,11 @@ public class IndexEntry {
 		}
 		return rr;
 	}
-	
-	public String[] splitLine(int WIDTH, String line) {
+	/*
+	 * Split the given string into multiple lines if the width is greater than the 
+	 * specified width 'WIDTH'.
+	 */
+	private String[] splitLine(int WIDTH, String line) {
 		String[] words = line.split("\\s+");
 		StringBuilder sb = new StringBuilder();
 		int count = 0;
@@ -73,10 +97,17 @@ public class IndexEntry {
 		}
 		return sb.toString().split("\\n");
 	}
-	
+	/**
+	 * Get the number of different pages this entry occurs.
+	 * @return - Number of pages this entry occurs
+	 */
 	public long getPageOccurrence(){
 		return pages.size();
 	}
+	/**
+	 * Gets the number of occurrence of this entry in the document.
+	 * @return - The number of times this entry occurs.
+	 */
 	public long getOccurrence() {
 		return count;
 	}

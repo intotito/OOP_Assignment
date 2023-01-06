@@ -133,12 +133,9 @@ public class IndexerImp implements Indexer {
 			File file = new File(path);
 			if (file.exists() && file.isFile()) {
 				long size = file.length();
-				// System.out.println("Size of file: " + size);
 				progress.set(0);
 				google_1000File = path;
-				// try (ExecutorService es = Executors.newVirtualThreadPerTaskExecutor()) {
 				Thread t = Thread.startVirtualThread(() -> Formatter.printProgress(size, () -> progress.get()));
-				// es.execute(() -> {
 				try {
 					this.google_1000 = Files.lines(Paths.get(google_1000File)).map((line) -> {
 						int lineSize = line.length() + 1;
@@ -146,18 +143,14 @@ public class IndexerImp implements Indexer {
 						return line.toLowerCase();
 					}).collect(Collectors.toList());
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				// });
 
 				try {
 					t.join();
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				// }
 			} else {
 				Formatter.printError("File does not exist", indent);
 			}
@@ -298,7 +291,6 @@ public class IndexerImp implements Indexer {
 			Pattern pattern = Pattern.compile("[\\W]*?([\\w]+)?-(\\w+)?.*");
 			Matcher matcher = pattern.matcher(query);
 			if (matcher.find()) {
-				// System.out.println(matcher.group(1));
 				String start = matcher.group(1);
 				String stop = matcher.group(2);
 				filter = e -> {
@@ -331,15 +323,11 @@ public class IndexerImp implements Indexer {
 			throw new IllegalArgumentException("Invalid argument supplied");
 		}
 
-//		List<String> keys = words.keySet().stream().collect(Collectors.toList());
-//		Function<Integer, String[]> supplier = (i) -> words.get(keys.get(i)).getAllRows(50).toArray(String[]::new);
 		String[] title = { "Word", "Detail" };
 		int[] ratio = { 10, 35 };
 		Formatter.printTabular(title, 0, null, ratio, 2, '+', '|', '-');
 		words.entrySet().stream().filter(filter).sorted(comp).takeWhile((e) -> contnue).forEach((v) -> {
-			// String subject = v.getKey();
 			IndexEntry e = v.getValue();
-
 			String[][] rows = e.getAllRows(70);
 			Formatter.printTabularFeed(rows, ratio, 2, '+', '|', '-');
 			lineCount += rows.length;
@@ -355,12 +343,9 @@ public class IndexerImp implements Indexer {
 						return;
 					}
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
 					e1.printStackTrace();
 				}
 			}
-
-			// System.out.printf("Key: %s, value: %s\n", v.getKey(), v.getValue());
 		});
 	}
 
@@ -390,12 +375,6 @@ public class IndexerImp implements Indexer {
 
 			if (file.exists() && file.isFile()) {
 				textFile = path;
-				/*
-				 * try (ExecutorService es = Executors.newVirtualThreadPerTaskExecutor()) { try
-				 * { Files.lines(Paths.get(path)) .forEach(line -> es.execute(() ->
-				 * process(line, lines.incrementAndGet()))); } catch (IOException e) {
-				 * e.printStackTrace(); } }
-				 */
 			} else {
 				Formatter.printError("File does not exist", indent);
 			}
@@ -468,11 +447,9 @@ public class IndexerImp implements Indexer {
 	 */
 	private void process(String line, long lineNumber) {
 		progress.set(progress.get() + line.length() + 4);
-//		System.out.println(line);
 		String[] words = Arrays.stream(line.trim().split("\\s+")).filter(Predicate.not(String::isBlank))
 				.map((w) -> w.replaceAll("^[^a-zA-Z0-9]+", "").replaceAll("[^a-zA-Z0-9]+$", "")).toArray(String[]::new);
 		Arrays.stream(words).map(String::toLowerCase).forEach(word -> {
-			// System.out.println("\t"+word);
 			if (!google_1000.contains(word)) {
 
 				IndexEntry index = this.words.get(word);
@@ -521,7 +498,4 @@ public class IndexerImp implements Indexer {
 		return lineNumber / linesPerPage;
 	}
 
-	private void parse(String str) {
-
-	}
 }

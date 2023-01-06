@@ -9,7 +9,7 @@ import java.util.stream.LongStream;
  * This class provides a suite of static methods for formatting output to the
  * console.
  * 
- * @author intot
+ * @author Otito Mbelu
  *
  */
 public class Formatter {
