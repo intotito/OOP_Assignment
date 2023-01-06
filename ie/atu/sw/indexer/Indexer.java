@@ -84,5 +84,12 @@ public interface Indexer {
 	 * @throws UncheckedException - if <code>code</code> specified is out of range
 	 */
 	void printIndex(int code);
+	
+	/**
+	 * This method prints the built index to a file. 
+	 * This method will do nothing if the index has not been built or a text file has not been specified,
+	 * and will display an error message accordingly. 
+	 */
+	void printToFile();
 
 }

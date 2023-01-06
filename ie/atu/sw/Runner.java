@@ -12,7 +12,7 @@ public class Runner {
 		System.out.println("************************************************************");
 		System.out.println("*       ATU - Dept. Computer Science & Applied Physics     *");
 		System.out.println("*                                                          *");
-		System.out.println("*              Virtual Threaded Text IndexerImp               *");
+		System.out.println("*           Virtual Threaded Text IndexerImp               *");
 		System.out.println("*                                                          *");
 		System.out.println("************************************************************");
 		/*

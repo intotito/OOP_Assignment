@@ -2,10 +2,13 @@ package ie.atu.sw.indexer;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
@@ -42,9 +45,9 @@ public class IndexerImp implements Indexer {
 	private int pageBreak = 1;
 	private volatile static AtomicLong progress = new AtomicLong(0);
 	private static AtomicLong lines = new AtomicLong(0);
-	Map<String, IndexEntry> words = new ConcurrentSkipListMap<>();
-	List<String> google_1000;
-	Map<String, DictionaryEntry> dictWords = new ConcurrentSkipListMap<>();
+	private Map<String, IndexEntry> words = new ConcurrentSkipListMap<>();
+	private List<String> google_1000;
+	private Map<String, DictionaryEntry> dictWords = new ConcurrentSkipListMap<>();
 
 	/**
 	 * 
@@ -86,10 +89,10 @@ public class IndexerImp implements Indexer {
 
 				}
 			} else {
-				Formatter.printError("File does not exist", indent);
+				Formatter.printError(System.out, "File does not exist", indent);
 			}
 		} else {
-			Formatter.printError("Invalid File path specified", indent);
+			Formatter.printError(System.out, "Invalid File path specified", indent);
 		}
 
 	}
@@ -104,7 +107,7 @@ public class IndexerImp implements Indexer {
 		if (path != null && !path.isBlank()) {
 			outputFile = path;
 		} else {
-			Formatter.printError("Invalid File path specified", indent);
+			Formatter.printError(System.out, "Invalid File path specified", indent);
 		}
 
 	}
@@ -152,10 +155,10 @@ public class IndexerImp implements Indexer {
 					e.printStackTrace();
 				}
 			} else {
-				Formatter.printError("File does not exist", indent);
+				Formatter.printError(System.out, "File does not exist", indent);
 			}
 		} else {
-			Formatter.printError("Invalid File path specified", indent);
+			Formatter.printError(System.out, "Invalid File path specified", indent);
 		}
 
 	}
@@ -193,6 +196,9 @@ public class IndexerImp implements Indexer {
 			break;
 		case 12:
 			setOptions();
+			break;
+		case 13:
+			printToFile();
 		default:
 			break;
 		}
@@ -209,7 +215,7 @@ public class IndexerImp implements Indexer {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		int input = -1;
 		String[] subMenus = { "Lines per Page", "Page break", "Back" };
-		Formatter.printBoxed("OPTIONS", indent, '*', '*', '*', 1);
+		Formatter.printBoxed(System.out, "OPTIONS", indent, '*', '*', '*', 1);
 		IntStream.range(0, subMenus.length).forEach((i) -> {
 			System.out.printf("\t\t(%d) %s\n", i + 1, subMenus[i]);
 		});
@@ -233,20 +239,20 @@ public class IndexerImp implements Indexer {
 			try {
 				linesPerPage = Integer.parseInt(query(String.format("Lines per Page[%d]>", linesPerPage), indent));
 			} catch (NumberFormatException nfe) {
-				Formatter.printError("Invalid Entry", 2);
+				Formatter.printError(System.out, "Invalid Entry", 2);
 			}
 		} else if (input == 2) {
 			try {
 				pageBreak = Integer.parseInt(query(String.format("Page break[%d]>", pageBreak), indent));
 			} catch (NumberFormatException nfe) {
-				Formatter.printError("Invalid Entry", 2);
+				Formatter.printError(System.out, "Invalid Entry", 2);
 			}
 		}
 	}
 
 	/*
-	 * This instance variable is used break of the output display loop when a user enters a
-	 * key to quit displaying outputs.
+	 * This instance variable is used break of the output display loop when a user
+	 * enters a key to quit displaying outputs.
 	 */
 	private volatile boolean contnue = true;
 	/*
@@ -260,16 +266,47 @@ public class IndexerImp implements Indexer {
 	 */
 	private int lineCount = 0;
 
+	@Override
+	public void printToFile() {
+		if (words.isEmpty()) {
+			Formatter.printError(System.out, "Index yet to be built", 1);
+			return;
+		} else if (outputFile == null) {
+			Formatter.printError(System.out, "Output File not specified", 1);
+			return;
+		}
+		try (PrintStream out = new PrintStream(outputFile)) {
+			String[] title = { "Word", "Detail" };
+			int[] ratio = { 10, 35 };
+			progress.set(1);
+	//		Thread.startVirtualThread();
+			try (ExecutorService es = Executors.newVirtualThreadPerTaskExecutor()) {
+				es.execute(() -> Formatter.printProgress(words.size(), () -> progress.get()));
+				es.execute(() -> {
+						Formatter.printTabular(out, title, 0, null, ratio, 2, '+', '|', '-');
+						words.entrySet().stream().forEach((v) -> {
+							progress.incrementAndGet();
+							IndexEntry e = v.getValue();
+							String[][] rows = e.getAllRows(70);
+							Formatter.printTabularFeed(out, rows, ratio, 2, '+', '|', '-');
+						});
+				});
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
 	/**
-	 *@see Indexer#printIndex
+	 * @see Indexer#printIndex
 	 * 
-	 * @throws IllegalArgumentException
+	 * @throws IllegalArgumentException - If parameter out of range
 	 */
 
 	@Override
 	public void printIndex(int code) {
 		if (words.isEmpty()) {
-			Formatter.printError("Index yet to be built", 2);
+			Formatter.printError(System.out, "Index yet to be built", 2);
 			return;
 		}
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
@@ -310,7 +347,7 @@ public class IndexerImp implements Indexer {
 					return first && second;
 				};
 			} else {
-				Formatter.printError("Invalid Range Entered", 2);
+				Formatter.printError(System.out, "Invalid Range Entered", 2);
 				return;
 			}
 		} else if (code == 3) { // Top occurrence
@@ -325,11 +362,11 @@ public class IndexerImp implements Indexer {
 
 		String[] title = { "Word", "Detail" };
 		int[] ratio = { 10, 35 };
-		Formatter.printTabular(title, 0, null, ratio, 2, '+', '|', '-');
+		Formatter.printTabular(System.out, title, 0, null, ratio, 2, '+', '|', '-');
 		words.entrySet().stream().filter(filter).sorted(comp).takeWhile((e) -> contnue).forEach((v) -> {
 			IndexEntry e = v.getValue();
 			String[][] rows = e.getAllRows(70);
-			Formatter.printTabularFeed(rows, ratio, 2, '+', '|', '-');
+			Formatter.printTabularFeed(System.out, rows, ratio, 2, '+', '|', '-');
 			lineCount += rows.length;
 			if (lineCount / linesPerPage > pageCount + pageBreak - 1) {
 				pageCount = lineCount / linesPerPage;
@@ -353,7 +390,7 @@ public class IndexerImp implements Indexer {
 	 * A utility method for getting String input from the user.
 	 */
 	private String query(String message, int indent) {
-		Formatter.printBoxed(message, indent, '+', '|', '-', 1);
+		Formatter.printBoxed(System.out, message, indent, '+', '|', '-', 1);
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		IntStream.range(0, indent).forEach(k -> System.out.print('\t'));
 		System.out.print(">");
@@ -376,15 +413,11 @@ public class IndexerImp implements Indexer {
 			if (file.exists() && file.isFile()) {
 				textFile = path;
 			} else {
-				Formatter.printError("File does not exist", indent);
+				Formatter.printError(System.out, "File does not exist", indent);
 			}
 		} else {
-			Formatter.printError("Invalid File path specified", indent);
+			Formatter.printError(System.out, "Invalid File path specified", indent);
 		}
-	}
-
-	public IndexerImp() {
-
 	}
 
 	/**
@@ -407,15 +440,15 @@ public class IndexerImp implements Indexer {
 	@Override
 	public void buildIndex() {
 		if (textFile == null) {
-			Formatter.printError("Cannot build Index, Text File not specified", 1);
+			Formatter.printError(System.out, "Cannot build Index, Text File not specified", 1);
 			return;
 		}
 		if (dictFile == null) {
-			Formatter.printError("Cannot build Index, Dictionary not Configured", 1);
+			Formatter.printError(System.out, "Cannot build Index, Dictionary not Configured", 1);
 			return;
 		}
 		if (google_1000File == null) {
-			Formatter.printError("Cannot build Index, Common Words not Configured", 1);
+			Formatter.printError(System.out, "Cannot build Index, Common Words not Configured", 1);
 			return;
 		}
 		words.clear();
@@ -433,8 +466,8 @@ public class IndexerImp implements Indexer {
 		int[] ratios = { 10, 10 };
 		String[][] vs = { { "File Name", file.getName() }, { "Unique words", "" + words.size() },
 				{ "Number of Pages", (lines.get() / 40) + "" } };
-		Formatter.printBoxed("BUILD SUMMARY", 1, '+', '|', '-', 0);
-		Formatter.printTabular(title, 2, (i) -> vs[i], ratios, 1, '+', '|', '-');
+		Formatter.printBoxed(System.out, "BUILD SUMMARY", 1, '+', '|', '-', 0);
+		Formatter.printTabular(System.out, title, 2, (i) -> vs[i], ratios, 1, '+', '|', '-');
 		words.entrySet().stream().sorted((e1, e2) -> {
 			return -(e1.getKey().compareTo(e2.getKey()));
 		});
@@ -472,11 +505,12 @@ public class IndexerImp implements Indexer {
 			}
 		});
 	}
-	
+
 	/*
-	 * This method process every word in a given line, and maps 
-	 * each word to a DictionaryEntry object, which is in turn put into a 
-	 * Map containing every word (Encapsulated as a DictionaryEntry) in the dictionary.
+	 * This method process every word in a given line, and maps each word to a
+	 * DictionaryEntry object, which is in turn put into a Map containing every word
+	 * (Encapsulated as a DictionaryEntry) in the dictionary.
+	 * 
 	 * @param line
 	 */
 	private void processDictionary(final String line) {

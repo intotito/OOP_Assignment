@@ -44,7 +44,10 @@ public class IndexEntry {
 	public String toString() {
 		return "IndexEntry [definition=" + definition + ", pages=" + pages + ", count=" + count + "]";
 	}
-
+/**
+ * Sets the definition of this word entry
+ * @param definition - The DictionaryEntry definition.
+ */
 	public void setDefinitions(DictionaryEntry definition) {
 		this.definition = definition;
 	}

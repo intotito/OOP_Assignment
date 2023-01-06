@@ -1,5 +1,6 @@
 package ie.atu.sw;
 
+import java.io.PrintStream;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.IntStream;
@@ -58,12 +59,16 @@ public class Formatter {
 			System.out.printf("] %d%%  ", progress);
 		}
 		try {
-			Thread.sleep(30);
+			Thread.sleep(0);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		System.out.println("\r                                                                       \r");
+		System.out.print("\r                                                                       \r");
+		System.out.flush();
+		System.out.print("\r");
+		System.out.flush();
+
 		// System.out.println("I am finished");
 //		});
 	}
@@ -82,6 +87,7 @@ public class Formatter {
 	 * outer for loop and the two nested for and stream respectively which is
 	 * <code>= O(3×n) ≈ O(n)</code>
 	 * 
+	 * @param out - The PrintStream to send the output
 	 * @param string  - The String to be displayed
 	 * @param indent  - The indentation of the display
 	 * @param corners - Corners characters for the box
@@ -89,25 +95,25 @@ public class Formatter {
 	 * @param hEdge   - Horizontal edge characters for the box
 	 * @param skip    - Number of spaces to skip while printing the enclosing box
 	 */
-	public static void printBoxed(String string, int indent, char corners, char vEdge, char hEdge, int skip) {
+	public static void printBoxed(PrintStream out, String string, int indent, char corners, char vEdge, char hEdge, int skip) {
 		final int width = string.length() + (((string.length() + 1) % 2) + 4);
 		for (int i = 0; i < 3; i++) {
-			System.out.print('\n');
-			IntStream.range(0, indent).forEach(k -> System.out.print('\t'));
+			out.print('\n');
+			IntStream.range(0, indent).forEach(k -> out.print('\t'));
 			for (int j = 0; j < width; j++) {
 				if (i == 0 || i == 2) {
-					System.out.printf("%c",
+					out.printf("%c",
 							(skip == 0 || j % (skip + 1) == 0 || j == width - 1)
 									? ((j == 0 || j == (width - 1)) ? corners : hEdge)
 									: '\0');
 					// System.out.printf("%c", (j == 0 || j == (width - 1)) ? corners : hEdge);
 				} else {
-					System.out.printf("%c %s%" + (width - 2 - string.length()) + "c", vEdge, string, vEdge);
+					out.printf("%c %s%" + (width - 2 - string.length()) + "c", vEdge, string, vEdge);
 					break;
 				}
 			}
 		}
-		System.out.println();
+		out.println();
 	}
 
 	/**
@@ -116,6 +122,7 @@ public class Formatter {
 	 * method with a title text.
 	 * 
 	 * @see Formatter#printBoxed(String, int, char, char, char, int)
+	 * @param out - The PrintStream to send the output
 	 * @param title   - The title to display with the string
 	 * @param string  - The String to be displayed
 	 * @param indent  - The indentation of the display
@@ -124,21 +131,21 @@ public class Formatter {
 	 * @param hEdge   - Horizontal edge characters for the table
 	 * @param skip    - Number of spaces to skip while printing the enclosing box
 	 */
-	public static void printBoxedTitled(String title, String string, int indent, char corners, char vEdge, char hEdge,
+	public static void printBoxedTitled(PrintStream out, String title, String string, int indent, char corners, char vEdge, char hEdge,
 			int skip) {
 		final int width = string.length() + (((string.length() + 1) % 2) + 3);
 		final int width1 = title.length() + (((title.length() + 0) % 2) + 3);
 		for (int i = 0; i < 3; i++) {
-			System.out.print('\n');
-			IntStream.range(0, indent).forEach(k -> System.out.print('\t'));
+			out.print('\n');
+			IntStream.range(0, indent).forEach(k -> out.print('\t'));
 			for (int j = 0; j < width + width1; j++) {
 				if (i == 0 || i == 2) {
-					System.out.printf("%c",
+					out.printf("%c",
 							(skip == 0 || j % (skip + 1) == 0)
 									? ((j == 0 || j == (width1 - 1) || (j == width + width1 - 1)) ? corners : hEdge)
 									: '\0');
 				} else {
-					System.out.printf(
+					out.printf(
 							"%c %s%" + (width1 - 2 - title.length()) + "c %s%" + (width - 1 - string.length()) + "c",
 							vEdge, title, vEdge, string, vEdge);
 					break;
@@ -156,8 +163,8 @@ public class Formatter {
 	 * @param msg    - Error message to be displayed
 	 * @param indent - The indentation of the display
 	 */
-	public static void printError(String msg, int indent) {
-		printBoxedTitled("Error", msg, indent, '*', '*', '*', 1);
+	public static void printError(PrintStream out, String msg, int indent) {
+		printBoxedTitled(out, "Error", msg, indent, '*', '*', '*', 1);
 	}
 
 	/**
@@ -172,6 +179,7 @@ public class Formatter {
 	 * The running time of this method is <code>O(n × m)</code> where
 	 * <code>n and m</code> are number of rows and width of the table respectively.
 	 * 
+	 * @param out - The PrintStream to send the output
 	 * @param title          - An array containing titles for the columns
 	 * @param numberOfValues - Number of rows in the table
 	 * @param supplier       - A Function functional interface that gets Each row of
@@ -182,7 +190,7 @@ public class Formatter {
 	 * @param vEdge          - Vertical edge characters for the table
 	 * @param hEdge          - Horizontal edge characters for the table
 	 */
-	public static void printTabular(String[] title, int numberOfValues, Function<Integer, String[]> supplier,
+	public static void printTabular(PrintStream out, String[] title, int numberOfValues, Function<Integer, String[]> supplier,
 			int[] ratios, int indent, char corners, char vEdge, char hEdge) {
 		final int rows = numberOfValues * 2 + 3;
 		final int cols = title.length;
@@ -192,21 +200,21 @@ public class Formatter {
 		}).toArray();
 //		final int WIDTH = IntStream.of(WIDTHS).sum() + title.length + 1;
 		for (int i = 0; i < rows; i++) {
-			IntStream.range(0, indent).forEach(index -> System.out.print('\t'));
-			System.out.printf("%c", i % 2 == 0 ? corners : vEdge);
+			IntStream.range(0, indent).forEach(index -> out.print('\t'));
+			out.printf("%c", i % 2 == 0 ? corners : vEdge);
 			String[] values = (i % 2 == 0 || i == 1) ? null : supplier.apply((i - 2) / 2);
 			for (int j = 0; j < cols; j++) {
 				if (i % 2 == 0) {
-					IntStream.range(0, WIDTHS[j]).forEach(index -> System.out.printf("%c", hEdge));
-					System.out.printf("%c", corners);
+					IntStream.range(0, WIDTHS[j]).forEach(index -> out.printf("%c", hEdge));
+					out.printf("%c", corners);
 				} else {
 					String s = (i == 1) ? title[j] : values[j].trim();
 					s = s.length() > WIDTHS[j] ? s.substring(0, WIDTHS[j] - 5) + "..." : s;
-					System.out.printf("%s%" + (WIDTHS[j] - s.length() + 1) + "c", s, vEdge);
+					out.printf("%s%" + (WIDTHS[j] - s.length() + 1) + "c", s, vEdge);
 				}
 			}
 
-			System.out.print('\n');
+			out.print('\n');
 		}
 
 	}
@@ -223,6 +231,7 @@ public class Formatter {
 	 * The running time of this method is <code>O(n × m)</code> where
 	 * <code>n and m</code> are number of entries and width of the table respectively.
 	 * 
+	 * @param out - The PrintStream to send the output
 	 * @param entry   - Array of values to be output on the console
 	 * @param ratios  - The width of various columns of the table
 	 * @param indent  - Indent to start displaying the feed
@@ -230,7 +239,7 @@ public class Formatter {
 	 * @param vEdge   - Vertical edge characters for the table
 	 * @param hEdge   - Horizontal edge characters for the table
 	 */
-	public static void printTabularFeed(String[][] entry, int[] ratios, int indent, char corners, char vEdge,
+	public static void printTabularFeed(PrintStream out, String[][] entry, int[] ratios, int indent, char corners, char vEdge,
 			char hEdge) {
 		final int rows = entry.length + 1;
 		final int cols = entry[0].length;
@@ -239,21 +248,21 @@ public class Formatter {
 			return ratios[index] * unitWidth;
 		}).toArray();
 		for (int i = 0; i < rows; i++) {
-			IntStream.range(0, indent).forEach(index -> System.out.print('\t'));
-			System.out.printf("%c", (i == (rows - 1)) ? corners : vEdge);
+			IntStream.range(0, indent).forEach(index -> out.print('\t'));
+			out.printf("%c", (i == (rows - 1)) ? corners : vEdge);
 
 			for (int j = 0; j < cols; j++) {
 				if (i == (rows - 1)) {
-					IntStream.range(0, WIDTHS[j]).forEach(index -> System.out.printf("%c", hEdge));
-					System.out.printf("%c", corners);
+					IntStream.range(0, WIDTHS[j]).forEach(index -> out.printf("%c", hEdge));
+					out.printf("%c", corners);
 				} else {
 					String s = entry[i][j];
 					s = s.length() > WIDTHS[j] ? s.substring(0, WIDTHS[j] - 5) + "..." : s;
-					System.out.printf("%s%" + (WIDTHS[j] - s.length() + 1) + "c", s, vEdge);
+					out.printf("%s%" + (WIDTHS[j] - s.length() + 1) + "c", s, vEdge);
 				}
 			}
 			// if(i != rows - 1)
-			System.out.print('\n');
+			out.print('\n');
 		}
 
 	}
