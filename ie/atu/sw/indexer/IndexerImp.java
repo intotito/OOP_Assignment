@@ -30,7 +30,7 @@ import ie.atu.sw.indexer.data.IndexEntry;
  * a suite of public methods necessary to configure, build, process and query an
  * index for a given document.
  * 
- * @author intot
+ * @author Otito Mbelu
  *
  */
 public class IndexerImp implements Indexer {
@@ -47,14 +47,11 @@ public class IndexerImp implements Indexer {
 	Map<String, DictionaryEntry> dictWords = new ConcurrentSkipListMap<>();
 
 	/**
-	 * *
 	 * 
-	 * This method Configures the parser with a dictionary provided as a URI to a
-	 * CSV file This method is responsible for retrieving and verifying the URI of
-	 * the dictionary from the user and parsing the file. It will display an error
-	 * message to the user when an exception occurs. The CSV file is parsed using a
-	 * single Virtual Thread per line
-	 * 
+	 * An implementation of the {@link Indexer#configureDictionary
+	 * configureDictionary} using a {@link ConcurrentSkipListMap
+	 * ConcurrentSkipListMap}
+	 *
 	 * <pre>
 	 * *******************
 	 * Big-O Running Time*
@@ -65,6 +62,8 @@ public class IndexerImp implements Indexer {
 	 * <code>n</code> is the number of entries in the dictionary. The underlying
 	 * data structure for mapping each word in the dictionary guarantees a running
 	 * time of <code>Log(n)</code> for search and insertion.
+	 * 
+	 * @see Indexer#configureDictionary
 	 */
 	@Override
 	public void configureDictionary() {
@@ -111,10 +110,8 @@ public class IndexerImp implements Indexer {
 	}
 
 	/**
-	 * 
-	 * This method configures the Parsing Engine with common words which are not
-	 * deemed worthy of listing in an index. These common words are expected from a
-	 * text file with each word separated by white space.
+	 * An implementation of the {@link Indexer#configureCommonWords
+	 * configureCommonWords} using an {@link ArrayList ArrayList}
 	 * 
 	 * <pre>
 	 * *******************
@@ -123,7 +120,10 @@ public class IndexerImp implements Indexer {
 	 * </pre>
 	 * 
 	 * The running time for this method is <code>O(n)</code> where <code>n</code> is
-	 * the number of words in the document.
+	 * the number of words in the document. The ArrayList guarantees that data will
+	 * be shoved into the collection at O(1).
+	 * 
+	 * @see Indexer#configureCommonWords
 	 */
 	@Override
 	public void configureCommonWords() {
@@ -168,7 +168,8 @@ public class IndexerImp implements Indexer {
 	}
 
 	/**
-	 * Executes command given a code.
+	 * A convenient method for querying and a menu and running the various methods
+	 * of the API
 	 * 
 	 * @param code - Code retrieved from menu operation. The value of the code is
 	 *             used internally to determine which command to invoke.
@@ -203,12 +204,12 @@ public class IndexerImp implements Indexer {
 			break;
 		}
 	}
-/*
- * Provides a submenu for setting options that controls how output
- * is displayed to the user. 
- * This includes: setting number of lines per page and number of page to 
- * order page break.
- */
+
+	/*
+	 * Provides a submenu for setting options that controls how output is displayed
+	 * to the user. This includes: setting number of lines per page and number of
+	 * page to order page break.
+	 */
 	private void setOptions() {
 		int indent = 2;
 		String inputStr = null;
@@ -249,28 +250,30 @@ public class IndexerImp implements Indexer {
 			}
 		}
 	}
+
 	/*
-	 * This instance is used break of the output display loop
-	 * when a user enters a key to quit from displaying output.
+	 * This instance variable is used break of the output display loop when a user enters a
+	 * key to quit displaying outputs.
 	 */
 	private volatile boolean contnue = true;
 	/*
-	 * This instance variable is used to keep track of the number of pages
-	 * traversed so far by the display engine. 
+	 * This instance variable is used to keep track of the number of pages traversed
+	 * so far by the display engine.
 	 */
 	private int pageCount = 0;
 	/*
-	 * This instance variable is used to keep track of the number of lines
-	 * traversed so far by the display engine.
+	 * This instance variable is used to keep track of the number of lines traversed
+	 * so far by the display engine.
 	 */
 	private int lineCount = 0;
 
-	
 	/**
-	 * This method provides the mechanism for 'walking' the index. The index
-	 * @param code
+	 *@see Indexer#printIndex
+	 * 
+	 * @throws IllegalArgumentException
 	 */
-	
+
+	@Override
 	public void printIndex(int code) {
 		if (words.isEmpty()) {
 			Formatter.printError("Index yet to be built", 2);
@@ -324,6 +327,8 @@ public class IndexerImp implements Indexer {
 		} else if (code == 4) { // Least occurrence
 			comp = (e1, e2) -> ((int) e1.getValue().getOccurrence() - (int) e2.getValue().getOccurrence());
 			filter = (e) -> true;
+		} else {
+			throw new IllegalArgumentException("Invalid argument supplied");
 		}
 
 //		List<String> keys = words.keySet().stream().collect(Collectors.toList());
@@ -403,6 +408,23 @@ public class IndexerImp implements Indexer {
 
 	}
 
+	/**
+	 * An implementation of the {@link Indexer#buildIndex buildIndex} method using
+	 * using a {@link ConcurrentSkipListMap ConcurrentSkipListMap}
+	 * 
+	 * <pre>
+	 * *******************
+	 * Big-O Running Time*
+	 * *******************
+	 * </pre>
+	 * 
+	 * The running time for this method is <code>O(n × m × Log(p))</code> where
+	 * <code>n</code> is the number of selected words to be indexed in the document,
+	 * <code>m</code> is the number of entries in the common words and
+	 * <code>p</code> is the number of entries in the dictionary.
+	 * 
+	 * @see Indexer#buildIndex
+	 */
 	@Override
 	public void buildIndex() {
 		if (textFile == null) {
@@ -427,7 +449,6 @@ public class IndexerImp implements Indexer {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-//		System.out.println("Time: " + (System.currentTimeMillis() - time));
 		time = System.currentTimeMillis() - time;
 		String[] title = { "Build Time", String.format("%dms", time) };
 		int[] ratios = { 10, 10 };
@@ -437,12 +458,14 @@ public class IndexerImp implements Indexer {
 		Formatter.printTabular(title, 2, (i) -> vs[i], ratios, 1, '+', '|', '-');
 		words.entrySet().stream().sorted((e1, e2) -> {
 			return -(e1.getKey().compareTo(e2.getKey()));
-		}).forEach((v) -> {
-			// System.out.printf("Key: %s, value: %s\n", v.getKey(), v.getValue());
 		});
 	}
 
-// .replaceAll("[^a-zA-Z0-9\\s+]", "")
+	/*
+	 * This method processes every line of the document and filters out select
+	 * special characters such as found in the start or end of words or isolated
+	 * group of special characters.Blank characters are also filtered out.
+	 */
 	private void process(String line, long lineNumber) {
 		progress.set(progress.get() + line.length() + 4);
 //		System.out.println(line);
@@ -458,7 +481,6 @@ public class IndexerImp implements Indexer {
 				} else {
 					index = new IndexEntry(word);
 					this.words.put(word, index);
-					// search dictionary and add definition
 				}
 				index.increment();
 				long pageNum = getPageNumber(lineNumber);
@@ -470,14 +492,16 @@ public class IndexerImp implements Indexer {
 				} else {
 					index.setDefinitions(de);
 				}
-
-			} else {
-				// System.out.println("XXXXXXXX _---- " + word);
 			}
-
 		});
 	}
-
+	
+	/*
+	 * This method process every word in a given line, and maps 
+	 * each word to a DictionaryEntry object, which is in turn put into a 
+	 * Map containing every word (Encapsulated as a DictionaryEntry) in the dictionary.
+	 * @param line
+	 */
 	private void processDictionary(final String line) {
 		progress.set(progress.get() + line.length() + 4);
 		String[] parts = line.split(",");
