@@ -1,11 +1,19 @@
 package ie.atu.sw;
 
 import ie.atu.sw.indexer.IndexerImp;
-
+/**
+ * A Runner class that runs the Application.
+ * @author Otito Mbelu
+ *
+ */
 public class Runner {
 	public volatile static long progress = 0;
 	public static int EXIT_CODE = -1;
-
+/**
+ * Application Entry point.
+ * @param args - Runtime arguments
+ * @throws Exception
+ */
 	public static void main(String[] args) throws Exception {
 		// You should put the following code into a menu or Menu class
 		System.out.println(ConsoleColour.CYAN);
